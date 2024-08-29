@@ -1,89 +1,80 @@
-import random
 import numpy as np
+import random
 
 class GomokuAgent:
     
     def __init__(self, agent_symbol, blank_symbol, opponent_symbol):
-        self.name = __name__
+        self.name = "Agent Two"
         self.agent_symbol = agent_symbol
         self.blank_symbol = blank_symbol
         self.opponent_symbol = opponent_symbol
     
     def play(self, board):
-        # Step 1: Try to win immediately
-        for i in range(15):
-            for j in range(15):
-                if board[i, j] == self.blank_symbol:
-                    board[i, j] = self.agent_symbol
-                    if self.is_winner(board, (i, j)):
-                        return (i, j)
-                    board[i, j] = self.blank_symbol
-        
-        # Step 2: Block the opponent's winning move
-        for i in range(15):
-            for j in range(15):
-                if board[i, j] == self.blank_symbol:
-                    board[i, j] = self.opponent_symbol
-                    if self.is_winner(board, (i, j)):
-                        board[i, j] = self.blank_symbol
-                        return (i, j)
-                    board[i, j] = self.blank_symbol
-        
-        # Step 3: Create multiple threats (fork strategy)
+        best_move = self.find_best_move(board)
+        return best_move
+    
+    def find_best_move(self, board):
         best_move = None
-        max_threats = 0
+        max_score = -float('inf')
+        
+        # Try to find the best move based on heuristic evaluation
+        for move in self.get_valid_moves(board):
+            i, j = move
+            board[i, j] = self.agent_symbol
+            score = self.evaluate_board(board)
+            board[i, j] = self.blank_symbol
+            
+            if score > max_score:
+                max_score = score
+                best_move = move
+        
+        # If no good move found, pick a random valid move
+        if best_move is None:
+            best_move = self.get_random_move(board)
+        
+        return best_move
+    
+    def evaluate_board(self, board):
+        score = 0
+        
+        # Evaluate rows, columns, and diagonals
         for i in range(15):
-            for j in range(15):
-                if board[i, j] == self.blank_symbol:
-                    threat_count = self.count_potential_wins(board, (i, j), self.agent_symbol)
-                    if threat_count > max_threats:
-                        max_threats = threat_count
-                        best_move = (i, j)
+            score += self.evaluate_line(board[i, :])  # Row
+            score += self.evaluate_line(board[:, i])  # Column
         
-        if best_move:
-            return best_move
+        # Diagonals
+        score += self.evaluate_line(board.diagonal())
+        score += self.evaluate_line(np.fliplr(board).diagonal())
         
-        # Step 4: Default to random move if no strategic advantage is found
-        i = random.randint(0, 14)
-        j = random.randint(0, 14)
-        while board[i, j] != self.blank_symbol:
-            i = random.randint(0, 14)
-            j = random.randint(0, 14)
-        return (i, j)
+        return score
     
-    def is_winner(self, board, move):
-        i, j = move
-        player = board[i, j]
-
-        def check(values):
-            counter = 0
-            for value in values:
-                if value == player:
-                    counter += 1
-                else:
-                    counter = 0
-                if counter >= 5:
-                    return True
-            return False
-
-        c1 = check(board[i, :])  # Check row
-        c2 = check(board[:, j])  # Check column
-        c3 = check(board.diagonal(j-i))  # Check main diagonal
-        c4 = check(np.fliplr(board).diagonal(board.shape[0]-i-j-1))  # Check anti-diagonal
-
-        return c1 or c2 or c3 or c4
+    def evaluate_line(self, line):
+        score = 0
+        for i in range(len(line) - 4):
+            segment = line[i:i+5]
+            score += self.evaluate_segment(segment)
+        return score
     
-    def count_potential_wins(self, board, move, symbol):
-        i, j = move
-        potential_wins = 0
+    def evaluate_segment(self, segment):
+        agent_count = np.sum(segment == self.agent_symbol)
+        opponent_count = np.sum(segment == self.opponent_symbol)
         
-        # Temporarily place the symbol on the board to evaluate the position
-        board[i, j] = symbol
-
-        if self.is_winner(board, (i, j)):
-            potential_wins += 1
+        if agent_count == 5:
+            return 10000  # Winning
+        elif agent_count == 4 and opponent_count == 0:
+            return 1000  # Strong potential win
+        elif agent_count == 3 and opponent_count == 0:
+            return 100  # Moderate potential win
+        elif opponent_count == 4 and agent_count == 0:
+            return -1000  # Block opponent's win
+        elif opponent_count == 3 and agent_count == 0:
+            return -100  # Block opponent's potential win
         
-        # Reset the board after evaluation
-        board[i, j] = self.blank_symbol
-        
-        return potential_wins
+        return 0
+    
+    def get_valid_moves(self, board):
+        return [(i, j) for i in range(15) for j in range(15) if board[i, j] == self.blank_symbol]
+    
+    def get_random_move(self, board):
+        valid_moves = self.get_valid_moves(board)
+        return random.choice(valid_moves) if valid_moves else None
