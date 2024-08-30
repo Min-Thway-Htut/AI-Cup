@@ -1,3 +1,3 @@
 # AI Competition
 
-## Building GOMOKU agent
+## Building A GOMOKU Agent
