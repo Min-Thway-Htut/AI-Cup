@@ -1,3 +1,3 @@
 # AI Competition
 
-## Building A GOMOKU Agent
+## Building A GOMOKU Agent using Python
