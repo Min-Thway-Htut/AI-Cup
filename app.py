@@ -7,10 +7,10 @@ app = flask.Flask(__name__)
 
 
 import teams.dumb_agent
-import teams.dumber_agent
+import teams.united_agent
 
 p1 = teams.dumb_agent.GomokuAgent(gomoku_game.PLAYER_1_SYMBOL, gomoku_game.BLANK_SYMBOL, gomoku_game.PLAYER_2_SYMBOL)
-p2 = teams.dumber_agent.GomokuAgent(gomoku_game.PLAYER_2_SYMBOL, gomoku_game.BLANK_SYMBOL, gomoku_game.PLAYER_1_SYMBOL)
+p2 = teams.united_agent.GomokuAgent(gomoku_game.PLAYER_2_SYMBOL, gomoku_game.BLANK_SYMBOL, gomoku_game.PLAYER_1_SYMBOL)
 game = gomoku_game.GomokuGame(p1, p2)
 
 team_info = {
